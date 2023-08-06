@@ -51,8 +51,8 @@ const
   ]
 
 var
-  outFile     = "fur2pret"
-  outCliFile  = "fur2pret-cli"
+  outFile     = "fur2asm"
+  outCliFile  = "fur2asm-cli"
 
 # Tasks
 
