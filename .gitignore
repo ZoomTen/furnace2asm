@@ -1,0 +1,5 @@
+*.fur
+*.asm
+*.exe
+*.res
+fur2asm-cli

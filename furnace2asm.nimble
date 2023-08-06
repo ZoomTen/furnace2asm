@@ -19,17 +19,6 @@ when defined(withGui):
 
 # Configuration
 
-#[
-  to build CLI only:
-    nimble makeRelease
-  
-  to build GUI only:
-    nimble -d:withGui -d:guiOnly makeRelease
-  
-  to build both:
-    nimble -d:withGui makeRelease
-]#
-
 import strformat, strutils
 
 const
