@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<style>
+		h1,h2{font-family:"trebuchet ms",trebuchet,sans-serif;line-height:1.5}
+		body{font-family:tahoma,sans-serif;font-size:10pt;line-height:1.75;}
+		h1{font-style:italic;text-align:center;}
+		li{margin-bottom:1em;}
+		b{background-color:#ff0;color:#000;}
+		code{background-color:#eee;color:#000;padding: .15em .25em;border:1px solid #f00}
+	</style>
+</head>
+<body>
+	<h1>Furnace2Asm<br><small>0.1</small></h1>
+	<hr>
+	<h2>What is it, really?</h2>
+	<p>
+		Eh, something to convert Furnace project
+		files into assembly for use in
+		<code>pokecrystal</code>, <code>pokegold</code>,
+		maybe even <code>pokered</code> (option to compile <i>that</i> maybe coming soon) if you so wish.
+		Nothing special, really. I had a command line
+		tool but I decided to upgrade it into a Windows
+		(yes, Windows-only) GUI tool because of all the
+		random-ass GBA binary hacking tools that use
+		this mid 00s aesthetic, and I miss it a bunch.
+		It was kino. It was a Python tool, and for it
+		all I rewrote it in Nim. Go figure. :p
+	</p>
+	<p>
+		Major props, of course, go to Ward's
+		<a href="https://github.com/khchen/wNim" target="_blank">wNim</a>
+		library for making this possible. I don't really
+		wanna deal with VB6 just to make this silly
+		app, lmao.
+	</p>
+	<h2>Why use this?</h2>
+	<p>
+		For the simple reason that Furnace actually
+		emulates a Game Boy, so what you hear is
+		a lot closer to what you get.
+	</p>
+	<h2>Any catches?</h2>
+	<p>A few, actually:</p>
+	<ul>
+		<li>
+			I haven't yet looked into the new v158+
+			pattern format, and I don't wanna code in
+			support for the old (&lt; v127) instrument
+			format (esp. for a quick project),
+			so the acceptable versions are
+			<b>127&ndash;157</b>, which means only
+			modules created <b>between 0.6pre2 and
+			0.6pre4</b> work with this tool. Sorry. :(
+		</li>
+		<li>
+			Because it is expressly for converting
+			Furnace project files to the GBC Pok&eacute;mon
+			disassemblies format, the project <b>must
+			only consist of a single Game Boy chip.</b>
+			Likewise, only Game Boy instruments are
+			supported with this tool. Any wild FM instrument
+			and it'll freak out...
+		</li>
+		<li>
+			If, in a pattern, the first note does not
+			start at row 0, you should put a
+			rest (OFF) note <i>at</i> row 0.
+		</li>
+		<li>
+			Looping is supported, but it's assumed
+			that only one <code>0Bxx</code> effect is
+			present in the entire project. If the song
+			does not loop, do not include a <code>0Bxx</code> effect.
+		</li>
+		<li>
+			Duty cycles are only serviced through the
+			<code>12xx</code> effect.
+		</li>
+		<li>
+			Stereo panning is supported through the
+			<code>08xy</code> effect.
+		</li>
+		<li>
+			Setting the wave instrument is supported
+			through the
+			<code>10xx</code> effect on channel 3.
+		</li>
+		<li>
+			The noise channel works like this:
+			Notes are ignored, but <i>instrument
+			numbers</i> are important. The tool does
+			not currently support mapping these
+			instrument numbers to drum set numbers
+			from the get-go, but constants will be
+			made for you so you can edit them
+			in.
+		</li>
+		<li>
+			The song title is used for naming
+			labels and constants. A song title like
+			<code>Cinnabar island</code> will be
+			transformed to <code>Music_CinnabarIsland</code>
+			and <code>CINNABAR_ISLAND</code>.
+		</li>
+		<li>
+			Macros are not supported.
+		</li>
+		<li>
+			If you have a <code>Bxx</code> or <code>Dxx</code>
+			effect on one of the channels, you should have it
+			on the rest of them, otherwise channels would
+			desync.
+		</li>
+		<li>
+			There may be some bugs I haven't yet accounted for.
+		</li>
+	</ul>
+	<h2>Why is this an HTML page? Don't you think getting pwned through using IE is a concern?</h2>
+	<p>
+		Yeahhhh I was gonna use RTF, but I couldn't
+		scroll vertically, so... :p
+	</p>
+</body>
