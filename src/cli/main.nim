@@ -5,7 +5,7 @@ import ../convert
 
 proc showHelp() =
     echo """
-fur2pret-cli [options] INPUT_FILE > OUTPUT_FILE
+fur2asm-cli [options] INPUT_FILE > OUTPUT_FILE
 
     -h, --help      Show this help screen.
     -o, --old       Convert to the legacy macros format.
