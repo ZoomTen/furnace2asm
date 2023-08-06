@@ -15,7 +15,7 @@ Make sure to click the Help button for more info :p
 Dependencies:
   * [Nim](https://nim-lang.org/) 1.6.14+
     * **Note:** Compiling with 2.0.0 (tried: `refc`, `arc`, `orc`) seems to have trouble running the GUI on XP...
-  * UPX
+  * [UPX](https://upx.github.io/)
   * Nimble (should come with Nim)
 
 to build CLI only (all platformas):
