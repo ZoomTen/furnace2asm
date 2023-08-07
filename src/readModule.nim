@@ -32,15 +32,15 @@ proc readHeader(module, stream, ptrs) {.inline.} =
     module.meta.version = stream.read(uint16)
 
     # stop right here
-    if (module.meta.version < 127) or (module.meta.version >= 157):
+    if (module.meta.version < 127):
         raise newException(WrongVersionError,
             fmt"""Unsupported module version!
 
-Supported versions are 127 - 157; you've loaded in a version {module.meta.version} module.
-Versions corresponding to the valid range is Furnace 0.6pre2 - 0.6pre4.
+Supported versions are >127; you've loaded in a version {module.meta.version} module.
+Versions corresponding to the valid range is > Furnace 0.6pre2.
 
 If you're using an older version, you can open your file in the newer version
-and then save again. If you're using newer than module version 157, well... sorry :("""
+and then save again."""
         )
     
     stream.setPosition 2, sspCur # reserved

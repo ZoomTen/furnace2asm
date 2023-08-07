@@ -61,7 +61,7 @@ proc pattern2Seq(pattern: Pattern): NoteSeq =
         noteLength: int
     
     for rowNumber, row in enumerate(cutRows): # what a handful
-        noteSignature = (row.note, row.octave)
+        noteSignature = (row.note, row.octave.uint16)
 
         if rowNumber == 0: # first row
             previousNoteSignature = noteSignature
