@@ -73,6 +73,10 @@ wClass(wMyAppFrame of wFrame):
             self.size
         )
 
+        var
+            savedPos: wPoint = (-1, -1)
+            posIsSaved: bool = false
+
         # emulate dragging the window frame
         # setDraggable doesn't work for weird things like this
         self.canvas.wEvent_MouseMove do (e: wEvent):
@@ -80,11 +84,16 @@ wClass(wMyAppFrame of wFrame):
                 let
                     rPos = getMousePos(e)
                     sPos = getMouseScreenPos(e)
-                if rPos.y < 226: # limit of top bar
+                if rPos.y < 228: # limit of top bar
+                    if not posIsSaved:
+                        savedPos = rPos
+                        posIsSaved = true
                     self.position=(
-                        sPos.x - 172,
-                        sPos.y - 98
+                        sPos.x - savedPos.x,
+                        sPos.y - savedPos.y
                     )
+            else:
+                posIsSaved = false
 
         # do bitmap button regions
         self.canvas.wEvent_LeftDown do (e: wEvent):
