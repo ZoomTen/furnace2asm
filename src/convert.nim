@@ -7,6 +7,7 @@ import std/[
     sets, tables, enumerate, sugar, strutils
 ]
 import std/math
+import std/options
 
 const mapNote2Const: Table[Note, string] = [
     (nC, "C_"), (nCs, "C#"), (nD, "D_"), (nDs, "D#"),
@@ -102,16 +103,16 @@ proc pattern2Seq(pattern: Pattern): NoteSeq =
                 rowAssocWithPrevNoteSig = row
                 noteLength = 1
 
-proc findCertainEffect(row: NoteSeqCommand, effectId: int): int {.inline.} =
+proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inline.} =
     let
         listEffects = collect(newSeq()):
             for effect in row.effects:
                 if effect[0] == effectId:
                     effect[1]
     if listEffects.len > 0:
-        result = listEffects[0]
+        result = some(listEffects[0])
     else:
-        result = -999
+        result = none(int16)
 
 proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string, channelNumber: 0 .. 3, useOldMacros: bool): seq[string] =
     noteTypeDefined = false
@@ -172,24 +173,24 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
             # change waveform ONLY thru 10xx
             if channelNumber == 2:
                 let newWaveIns = row.findCertainEffect(0x10)
-                if (newWaveIns != currentWaveId) and (newWaveIns != -999):
-                    currentWaveId = newWaveIns
+                if newWaveIns.isSome and (newWaveIns.get != currentWaveId):
+                    currentWaveId = newWaveIns.get
                     insChanged = true
             # pitch offset
             let newPitch = row.findCertainEffect(0xe5)
-            if (newPitch != -999) and (newPitch != currentTone):
-                currentTone = newPitch
+            if newPitch.isSome and (newPitch.get != currentTone):
+                currentTone = newPitch.get
                 result.add(
                     if useOldMacros:
-                        "tone $#" % [$(newPitch - 0x80)]
+                        "tone $#" % [$(currentTone - 0x80)]
                     else:
-                        "pitch_offset $#" % [$(newPitch - 0x80)]
+                        "pitch_offset $#" % [$(currentTone - 0x80)]
                 )
             # change duty cycle ONLY thru 12xx
             if channelNumber <= 1:
                 let newDuty = row.findCertainEffect(0x12)
-                if (newDuty != currentDuty) and (newDuty != -999):
-                    currentDuty = newDuty
+                if newDuty.isSome and (newDuty.get != currentDuty):
+                    currentDuty = newDuty.get
                     result.add(
                         if useOldMacros:
                             "dutycycle $#" % [$currentDuty]
@@ -198,11 +199,11 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
                     )
             # apply stereo effects
             let newStereo = row.findCertainEffect(0x08)
-            if (newStereo != currentStereo) and (newStereo != -999):
-                if newStereo < 0:
+            if newStereo.isSome and (newStereo.get != currentStereo):
+                if newStereo.get < 0:
                     currentStereo = 0xff
                 else:
-                    currentStereo = newStereo
+                    currentStereo = newStereo.get
                 let
                     newStereoLeft = bool(currentStereo shr 4)
                     newStereoRight = bool(currentStereo and 0b1111)
