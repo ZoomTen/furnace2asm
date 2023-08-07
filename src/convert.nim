@@ -20,7 +20,7 @@ const mapNote2Const: Table[Note, string] = [
 var
     noteTypeDefined = false
     currentInstrument = -1
-    currentVolume = 15
+    currentVolume: range[0..15] = 15
 
 proc moduleSpeedToGfTempo(timing: TimingInfo): int =
     # bpmify
