@@ -9,7 +9,7 @@ skipDirs      = @["src"]
 # Dependencies
 
 requires [
-  "nim >= 1.6.14",
+  "nim >= 1.6.0",
   "binstreams#4715f6c",
   "zippy#a3fd6f0"
 ]
@@ -60,6 +60,9 @@ let
   winxpFlag = when defined(mingw) or defined(windows):
       "--define:useWinXP --cpu:i386"
     else: ""
+  mmFlag = when (NimMajor > 1):
+      "--mm:arc"
+    else: "--gc:arc"
 
 # Maybe I should've used Nake...
 
@@ -79,9 +82,9 @@ task makeDevel, "Make development build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"c --mm:arc --app:gui {mingwFlag} {winxpFlag} -o:{outFile} {mainGuiFile}"
+    selfExec fmt"c {mmFlag} --app:gui {mingwFlag} {winxpFlag} -o:{outFile} {mainGuiFile}"
   when not defined(guiOnly):
-    selfExec fmt"c --mm:arc --app:console {mingwFlag} {winxpFlag} -o:{outCliFile} {mainCliFile}"
+    selfExec fmt"c {mmFlag} --app:console {mingwFlag} {winxpFlag} -o:{outCliFile} {mainCliFile}"
 
 task testDevel, "Test development build":
   makeDevelTask()
@@ -94,10 +97,10 @@ task makeRelease, "Make release build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"""c --mm:arc --app:gui -d:release {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
+    selfExec fmt"""c {mmFlag} --app:gui -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
     exec fmt"""upx -9 {outFile}"""
   when not defined(guiOnly):
-    selfExec fmt"""c --mm:arc --app:console -d:release {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
+    selfExec fmt"""c {mmFlag} --app:console -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
     exec fmt"""upx -9 {outCliFile}"""
 
 task testRelease, "Test release build":
