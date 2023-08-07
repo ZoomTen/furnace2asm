@@ -4,9 +4,9 @@ import zippy
 import ./types/[
     module, chip, exceptions
 ]
-import ./[
-    util, readInstrument, readPattern
-]
+import ./util
+import ./readInstrument
+import ./readPattern
 import tables
 import strformat
 

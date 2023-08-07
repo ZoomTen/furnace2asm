@@ -4,8 +4,7 @@ import ./types/[
     module, chip, pattern, instrument, instrumentType, sequence, notes
 ]
 import std/[
-    sets, tables, enumerate, sugar,
-    strformat, strutils
+    sets, tables, enumerate, sugar, strutils
 ]
 import std/math
 
