@@ -1,7 +1,8 @@
 from parseopt import nil
 from os import nil
-import strutils
+import std/strutils
 import ../convert
+import ../versionInfo
 
 proc showHelp() =
     echo """
@@ -9,11 +10,17 @@ fur2asm-cli [options] INPUT_FILE > OUTPUT_FILE
 
     -h, --help      Show this help screen.
     -o, --old       Convert to the legacy macros format.
+    -v, --version   Show app version
     """
+
+proc showAppVersionAndQuit() =
+    quit "fur2asm-cli v$#.$#.$#" % [
+        $VersionMajor, $VersionMinor, $VersionBuild
+    ], QuitSuccess
 
 proc showHelpAndQuit() {.inline.} =
     showHelp()
-    quit(0)
+    quit(QuitSuccess)
 
 when isMainModule:
     var
@@ -41,6 +48,8 @@ when isMainModule:
                 showHelpAndQuit()
             of "o":
                 useOldMacros = true
+            of "v":
+                showAppVersionAndQuit()
             else:
                 showHelp()
                 quit(
@@ -53,6 +62,8 @@ when isMainModule:
                 showHelpAndQuit()
             of "old":
                 useOldMacros = true
+            of "version":
+                showAppVersionAndQuit()
             else:
                 showHelp()
                 quit(
