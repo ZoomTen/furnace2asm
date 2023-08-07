@@ -91,17 +91,13 @@ task testDevel, "Test development build":
   runExecTask()
 
 task makeRelease, "Make release build":
-  when findExe("upx") == "":
-    {.error: "Can't find upx!".}
   makeDepsTask()
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
     selfExec fmt"""c {mmFlag} --app:gui -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
-    exec fmt"""upx -9 {outFile}"""
   when not defined(guiOnly):
     selfExec fmt"""c {mmFlag} --app:console -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
-    exec fmt"""upx -9 {outCliFile}"""
 
 task testRelease, "Test release build":
   makeReleaseTask()
