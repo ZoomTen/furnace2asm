@@ -13,8 +13,8 @@ Make sure to click the Help button for more info :p
 ## Building
 
 Dependencies:
-  * [Nim](https://nim-lang.org/) 1.6.14+
-    * **Note:** Compiling with 2.0.0 (tried: `refc`, `arc`, `orc`) seems to have trouble running the GUI on XP...
+  * [Nim](https://nim-lang.org/) 1.6.0+
+    * **Note:** 2.0.0 seems to break compatiblity with XP... (complains about `GetTickCount64` even when `-D_WIN32_WINNT=0x501` is set)
   * [UPX](https://upx.github.io/)
   * Nimble (should come with Nim)
 
