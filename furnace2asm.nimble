@@ -16,6 +16,7 @@ requires [
 
 when defined(withGui):
   requires "wNim#4dc3afd"
+  requires "winim#313ad15"
 
 # Configuration
 

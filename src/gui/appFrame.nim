@@ -8,6 +8,7 @@ import std/[strutils, strformat]
 import ../convert
 import ./aboutDialog
 import ./helpDialog
+import winim/lean
 
 const
     bkgBitmap = staticRead("images/window.png")
@@ -113,17 +114,20 @@ wClass(wMyAppFrame of wFrame):
             ).withinRange(pos[0], pos[1]):
                 self.close()
         
-        # paint the background
-        self.canvas.wEvent_Paint do ():
-            var dc = self.canvas.PaintDC()
-            let size = dc.size
-            dc.blit(
-                source=self.dcContext,
-                width=size.width,
-                height=size.height
+        # draw background by plugging into WM_ERASEBKGND
+        # instead of WM_PAINT
+        self.canvas.connect(WM_ERASEBKGND) do (e: wEvent):
+            let
+                hdc = e.getwParam
+            hdc.BitBlt(
+                0, 0,
+                self.imgBackground.width, self.imgBackground.height,
+                self.dcContext.mHdc,
+                0, 0,
+                SRCCOPY
             )
-            dc.delete
-        
+            e.mResult = 1
+
         self.canvas.setFont(
             Font(faceName="tahoma", pointSize=10.0, weight=wFontWeightNormal)
         )
