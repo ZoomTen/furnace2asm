@@ -55,7 +55,7 @@ wClass(wMyAppFrame of wFrame):
         wFrame(self).init(
             title="Furnace2ASM",
             size=self.imgBackground.size,
-            style=0
+            style=wClipChildren
         )
         self.clearWindowStyle(wCaption)
         self.shape = Region(self.imgBackground)
