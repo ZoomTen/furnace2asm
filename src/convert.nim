@@ -110,7 +110,10 @@ proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inli
                 if effect[0] == effectId:
                     effect[1]
     if listEffects.len > 0:
-        result = some(listEffects[0])
+        if listEffects[0] < 0: # clamp to 0
+            result = some(0'i16)
+        else:
+            result = some(listEffects[0])
     else:
         result = none(int16)
 
