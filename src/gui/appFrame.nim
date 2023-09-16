@@ -296,6 +296,12 @@ wClass(wMyAppFrame of wFrame):
                     pos=(160, 385), size=(305, 24)
                 )
                 self.chkUseOldStyle.setBackgroundColor wWhite
+            else:
+                let lblPrismEdition = self.canvas.StaticText(
+                    label="Prism Edition",
+                    pos=(160, 385), size=(305, 24)
+                )
+                lblPrismEdition.setBackgroundColor wWhite
     
     proc updateDisplay(self: wMyAppFrame) =
         self.dcContext.clear()
