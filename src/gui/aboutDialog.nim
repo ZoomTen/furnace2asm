@@ -91,21 +91,11 @@ wClass(wAboutDialog of wFrame):
         """
 
         let
-            lblGreetz1 = greetzCol1.StaticText(
-                label="TastySnax12"
-            )
-            lblGreetz2 = greetzCol1.StaticText(
-                label="Blue Mario"
-            )
-            lblGreetz3 = greetzCol1.HyperlinkCtrl(
-                label="<a href=\"https://tildearow.org\">tildearrow</a>"
-            )
-            lblGreetz4 = greetzCol1.HyperlinkCtrl(
-                label="<a href=\"https://github.com/khchen/wNim\">wNim Project</a>"
-            )
-            lblGreetz5 = greetzCol2.HyperlinkCtrl(
-                label="<a href=\"https://web.archive.org/web/20120919185123if_/http://www.visualpharm.com/\">VisualPharm</a>"
-            )
+            lblGreetz1 = greetzCol1.StaticText(label="TastySnax12")
+            lblGreetz2 = greetzCol1.StaticText(label="Blue Mario")
+            lblGreetz3 = greetzCol1.StaticText(label="tildearrow")
+            lblGreetz4 = greetzCol1.StaticText(label="wNim Project")
+            lblGreetz5 = greetzCol2.StaticText(label="VisualPharm")
             lblGreetz6 = greetzCol2.StaticText(label="vbcorner.net")
             lblGreetz7 = greetzCol2.StaticText(label="pret")
             lblGreetz8 = greetzCol2.StaticText(label="RainbowDevs")
@@ -117,7 +107,7 @@ wClass(wAboutDialog of wFrame):
             H:|[lblGreetz2]|
             H:|[lblGreetz3]|
             H:|[lblGreetz4]|
-            V:|[lblGreetz1(12)]-[lblGreetz2(12)]-[lblGreetz3(12)]-[lblGreetz4(12)]~|
+            V:|[lblGreetz1(14)]-[lblGreetz2(14)]-[lblGreetz3(14)]-[lblGreetz4(14)]~|
         """
 
         greetzCol2.autolayout """
@@ -126,7 +116,7 @@ wClass(wAboutDialog of wFrame):
             H:|[lblGreetz6]|
             H:|[lblGreetz7]|
             H:|[lblGreetz8]|
-            V:|[lblGreetz5(12)]-[lblGreetz6(12)]-[lblGreetz7(12)]-[lblGreetz8(12)][lblGreetzEnd]|
+            V:|[lblGreetz5(14)]-[lblGreetz6(14)]-[lblGreetz7(14)]-[lblGreetz8(14)][lblGreetzEnd]|
         """
 
         let
