@@ -159,6 +159,9 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
         currentStereo = -1
         insChanged = false
     
+    when defined(prism):
+        var currentArp = -1
+    
     for row in safeNoteBin:
         insChanged = false
 
@@ -222,6 +225,33 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
                             if newStereoRight: "TRUE" else: "FALSE"
                         ]
                 )
+            when defined(prism):
+                # apply arp effects
+                let newArp = row.findCertainEffect(0x00)
+                if newArp.isSome and (newArp.get != currentArp):
+                    currentArp = newArp.get
+                    let
+                        newArpX = (currentArp and 0b11110000) shr 4
+                        newArpY = (currentArp and 0b1111)
+                    result.add(
+                        "arp $#, $#" % [$newArpX, $newArpY]
+                    )
+                
+                # apply pitch effects
+                if (
+                    let newPitchDown = row.findCertainEffect(0x02);
+                    newPitchDown.isSome
+                ):
+                    result.add(
+                        "portadown $#" % [$(newPitchDown.get)]
+                    )
+                if (
+                    let newPitchUp = row.findCertainEffect(0x01);
+                    newPitchUp.isSome
+                ):
+                    result.add(
+                        "portaup $#" % [$(newPitchUp.get)]
+                    )
 
         
         if insChanged:

@@ -44,6 +44,10 @@ var
   outFile     = "fur2asm"
   outCliFile  = "fur2asm-cli"
 
+when defined(prism):
+  outFile &= "-pkpr"
+  outCliFile &= "-pkpr"
+
 # Tasks
 
 when defined(mingw):
@@ -64,6 +68,9 @@ let
   mmFlag = when (NimMajor > 1):
       "--mm:arc"
     else: "--gc:arc"
+  prismFlag = when defined(prism):
+      "-d:prism"
+    else: ""
 
 # Maybe I should've used Nake...
 
@@ -83,9 +90,9 @@ task makeDevel, "Make development build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"c {mmFlag} --app:gui {mingwFlag} {winxpFlag} -o:{outFile} {mainGuiFile}"
+    selfExec fmt"c {mmFlag} --app:gui {prismFlag} {mingwFlag} {winxpFlag} -o:{outFile} {mainGuiFile}"
   when not defined(guiOnly):
-    selfExec fmt"c {mmFlag} --app:console {mingwFlag} {winxpFlag} -o:{outCliFile} {mainCliFile}"
+    selfExec fmt"c {mmFlag} --app:console {prismFlag} {mingwFlag} {winxpFlag} -o:{outCliFile} {mainCliFile}"
 
 task testDevel, "Test development build":
   makeDevelTask()
@@ -96,9 +103,9 @@ task makeRelease, "Make release build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"""c {mmFlag} --app:gui -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
+    selfExec fmt"""c {mmFlag} --app:gui -d:danger {prismFlag} {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
   when not defined(guiOnly):
-    selfExec fmt"""c {mmFlag} --app:console -d:danger {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
+    selfExec fmt"""c {mmFlag} --app:console -d:danger {prismFlag} {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
 
 task testRelease, "Test release build":
   makeReleaseTask()

@@ -120,10 +120,16 @@ wClass(wAboutDialog of wFrame):
         """
 
         let
-            verlabel = self.frmVersionInfo.StaticText(
-                label=fmt"{VersionMajor}.{VersionMinor} build {VersionBuild}",
-                style=wAlignCenter or wAlignMiddle
-            )
+            verlabel = when defined(prism):
+                    self.frmVersionInfo.StaticText(
+                        label=fmt"{VersionMajor}.{VersionMinor} build {VersionBuild} Prism Edition",
+                        style=wAlignCenter or wAlignMiddle
+                    )
+                else:
+                    self.frmVersionInfo.StaticText(
+                        label=fmt"{VersionMajor}.{VersionMinor} build {VersionBuild}",
+                        style=wAlignCenter or wAlignMiddle
+                    )
         
         verlabel.setFont(
             Font(faceName="tahoma", pointSize=12.0, weight=wFontWeightBold)

@@ -170,12 +170,20 @@ wClass(wMyAppFrame of wFrame):
             ).showModal()
         else:
             try:
-                writeFile(
-                    self.wOpenedAsm,
-                    convertFile(
-                        self.wOpenedFur, self.chkUseOldStyle.isChecked()
-                    ).replace("\n","\r\n")
-                )
+                when not defined(prism):
+                    writeFile(
+                        self.wOpenedAsm,
+                        convertFile(
+                            self.wOpenedFur, self.chkUseOldStyle.isChecked()
+                        ).replace("\n","\r\n")
+                    )
+                else:
+                    writeFile(
+                        self.wOpenedAsm,
+                        convertFile(
+                            self.wOpenedFur, true # always use old-style macros
+                        ).replace("\n","\r\n")
+                    )
                 discard self.MessageDialog(
                     message="Successfully converted! You may want to edit the resulting file.",
                     caption="Success",
@@ -282,11 +290,12 @@ wClass(wMyAppFrame of wFrame):
             self.btnAbout.setBitmap4Margins (8,8,0,8)
             self.btnExit.setBitmap4Margins (8,8,0,8)
         block addMisc:
-            self.chkUseOldStyle = self.canvas.CheckBox(
-                label="Use old pret macros",
-                pos=(160, 385), size=(305, 24)
-            )
-            self.chkUseOldStyle.setBackgroundColor wWhite
+            when not defined(prism):
+                self.chkUseOldStyle = self.canvas.CheckBox(
+                    label="Use old pret macros",
+                    pos=(160, 385), size=(305, 24)
+                )
+                self.chkUseOldStyle.setBackgroundColor wWhite
     
     proc updateDisplay(self: wMyAppFrame) =
         self.dcContext.clear()

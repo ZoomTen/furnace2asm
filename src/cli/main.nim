@@ -5,13 +5,11 @@ import ../convert
 import ../versionInfo
 
 proc showHelp() =
-    echo """
-fur2asm-cli [options] INPUT_FILE > OUTPUT_FILE
-
-    -h, --help      Show this help screen.
-    -o, --old       Convert to the legacy macros format.
-    -v, --version   Show app version
-    """
+    echo "fur2asm-cli [options] INPUT_FILE > OUTPUT_FILE"
+    echo "    -h, --help      Show this help screen."
+    when not defined(prism):
+        echo "    -o, --old       Convert to the legacy macros format."
+    echo "    -v, --version   Show app version"
 
 proc showAppVersionAndQuit() =
     quit "fur2asm-cli v$#.$#.$#" % [
@@ -27,7 +25,9 @@ when isMainModule:
         args = parseopt.initOptParser(
             os.commandLineParams()
         )
-        useOldMacros = false
+        useOldMacros =
+            when defined(prism): true
+            else: false
     
     if parseopt.remainingArgs(args).len == 0:
         showHelpAndQuit()
@@ -47,7 +47,10 @@ when isMainModule:
             of "h":
                 showHelpAndQuit()
             of "o":
-                useOldMacros = true
+                when not defined(prism):
+                    useOldMacros = true
+                else:
+                    discard
             of "v":
                 showAppVersionAndQuit()
             else:
@@ -61,7 +64,10 @@ when isMainModule:
             of "help":
                 showHelpAndQuit()
             of "old":
-                useOldMacros = true
+                when not defined(prism):
+                    useOldMacros = true
+                else:
+                    discard
             of "version":
                 showAppVersionAndQuit()
             else:

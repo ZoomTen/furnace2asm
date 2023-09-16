@@ -33,3 +33,5 @@ Cross compiling (works on my machine):
 ```
 nimble -d:withGui -d:mingw makeRelease
 ```
+
+Add `-d:prism` for PkPr development
