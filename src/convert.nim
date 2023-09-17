@@ -435,7 +435,10 @@ proc toPretAsm(module: Module, useOldMacros: bool = false): string =
     result &= "\n; Drum constants, replace with the proper values\n"
 
     for i in drumInstruments:
-        result &= "DRUM_$#_$#\tEQU\t$$00\n" % [constName, i.toHex(2)]
+        if useOldMacros:
+            result &= "DRUM_$#_$#\tEQU\tC_\n" % [constName, i.toHex(2)]
+        else:
+            result &= "DRUM_$#_$#\tEQU\t$$00\n" % [constName, i.toHex(2)]
     
     result &= "\n; Drumset to use, replace with the proper value\n"
     result &= "DRUMSET_$#\tEQU\t$$00\n" % [constName]
