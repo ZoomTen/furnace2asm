@@ -35,6 +35,11 @@ proc readDev127Feature(instrument, stream): Ins2Feature =
     of fcName:
         result.name = insContents.readCStr()
         instrument.name = result.name
+    of fcSample: # XXX IGNORED
+        let
+            sample = insContents.read(uint16).int
+            flags = insContents.read(uint8).int
+            waveformLen = insContents.read(uint8).int
     of fcGb:
         let
             env  = insContents.read(uint8).int

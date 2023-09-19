@@ -29,6 +29,8 @@ type
             name*: string
         of fcMacro:
             macroList*: seq[Ins2Macro]
+        of fcSample: # XXX IGNORED
+            discard
         of fcEnd:
             discard
     
