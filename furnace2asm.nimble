@@ -10,13 +10,10 @@ skipDirs      = @["src"]
 
 requires [
   "nim >= 1.6.0",
+  "wNim#4dc3afd",
   "binstreams#4715f6c",
   "zippy#a3fd6f0"
 ]
-
-when defined(withGui):
-  requires "wNim#4dc3afd"
-  requires "winim#313ad15"
 
 # Configuration
 
@@ -44,10 +41,6 @@ var
   outFile     = "fur2asm"
   outCliFile  = "fur2asm-cli"
 
-when defined(prism):
-  outFile &= "-pkpr"
-  outCliFile &= "-pkpr"
-
 # Tasks
 
 when defined(mingw):
@@ -68,11 +61,6 @@ let
   mmFlag = when (NimMajor > 1):
       "--mm:arc"
     else: "--gc:arc"
-  prismFlag = when defined(prism):
-      "-d:prism"
-    else: ""
-
-# Maybe I should've used Nake...
 
 task runExec, "Run generated exe":
   if defined(windows):
@@ -90,9 +78,9 @@ task makeDevel, "Make development build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"c {mmFlag} --app:gui {prismFlag} {mingwFlag} {winxpFlag} -o:{outFile} {mainGuiFile}"
+    selfExec fmt"c {mmFlag} --app:gui {mingwFlag} {winxpFlag} --threads:off -o:{outFile} {mainGuiFile}"
   when not defined(guiOnly):
-    selfExec fmt"c {mmFlag} --app:console {prismFlag} {mingwFlag} {winxpFlag} -o:{outCliFile} {mainCliFile}"
+    selfExec fmt"c {mmFlag} --app:console {mingwFlag} {winxpFlag} --threads:off -o:{outCliFile} {mainCliFile}"
 
 task testDevel, "Test development build":
   makeDevelTask()
@@ -103,9 +91,9 @@ task makeRelease, "Make release build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
-    selfExec fmt"""c {mmFlag} --app:gui -d:danger {prismFlag} {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
+    selfExec fmt"""c {mmFlag} --app:gui -d:danger {mingwFlag} {winxpFlag} --threads:off --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
   when not defined(guiOnly):
-    selfExec fmt"""c {mmFlag} --app:console -d:danger {prismFlag} {mingwFlag} {winxpFlag} --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
+    selfExec fmt"""c {mmFlag} --app:console -d:danger {mingwFlag} {winxpFlag} --threads:off --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
 
 task testRelease, "Test release build":
   makeReleaseTask()

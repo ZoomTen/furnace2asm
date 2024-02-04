@@ -7,8 +7,8 @@ import ../versionInfo
 proc showHelp() =
     echo "fur2asm-cli [options] INPUT_FILE > OUTPUT_FILE"
     echo "    -h, --help      Show this help screen."
-    when not defined(prism):
-        echo "    -o, --old       Convert to the legacy macros format."
+    echo "    -o, --old       Convert to the legacy macros format."
+    echo "    -p, --prism     Pokemon Prism support, implies -o"
     echo "    -v, --version   Show app version"
 
 proc showAppVersionAndQuit() =
@@ -25,9 +25,8 @@ when isMainModule:
         args = parseopt.initOptParser(
             os.commandLineParams()
         )
-        useOldMacros =
-            when defined(prism): true
-            else: false
+        useOldMacros = false
+        enablePrism = false
     
     if parseopt.remainingArgs(args).len == 0:
         showHelpAndQuit()
@@ -47,10 +46,10 @@ when isMainModule:
             of "h":
                 showHelpAndQuit()
             of "o":
-                when not defined(prism):
-                    useOldMacros = true
-                else:
-                    discard
+                useOldMacros = true
+            of "p":
+                useOldMacros = true
+                enablePrism = true
             of "v":
                 showAppVersionAndQuit()
             else:
@@ -64,10 +63,10 @@ when isMainModule:
             of "help":
                 showHelpAndQuit()
             of "old":
-                when not defined(prism):
-                    useOldMacros = true
-                else:
-                    discard
+                useOldMacros = true
+            of "prism":
+                useOldMacros = true
+                enablePrism = true
             of "version":
                 showAppVersionAndQuit()
             else:
@@ -81,5 +80,5 @@ when isMainModule:
         showHelpAndQuit()
     
     echo convertFile(
-        inFile, useOldMacros
+        inFile, useOldMacros, enablePrism
     )

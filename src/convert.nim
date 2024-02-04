@@ -117,7 +117,7 @@ proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inli
     else:
         result = none(int16)
 
-proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string, channelNumber: 0 .. 3, useOldMacros: bool): seq[string] =
+proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string, channelNumber: 0 .. 3, useOldMacros: bool, enablePrism: bool): seq[string] =
     noteTypeDefined = false
     result = @[]
 
@@ -158,9 +158,7 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
         currentDuty = -1
         currentStereo = -1
         insChanged = false
-    
-    when defined(prism):
-        var currentArp = -1
+        currentArp = -1
     
     for row in safeNoteBin:
         insChanged = false
@@ -225,7 +223,7 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
                             if newStereoRight: "TRUE" else: "FALSE"
                         ]
                 )
-            when defined(prism):
+            if enablePrism:
                 # apply arp effects
                 let newArp = row.findCertainEffect(0x00)
                 if newArp.isSome and (newArp.get != currentArp):
@@ -389,7 +387,7 @@ proc seq2Asm(sequence: NoteSeq, instruments: seq[Instrument2], constName: string
         if useOldMacros: "endchannel" else: "sound_ret"
     )
 
-proc toPretAsm(module: Module, useOldMacros: bool = false): string =
+proc toPretAsm(module: Module, useOldMacros: bool = false, enablePrism: bool = false): string =
     if not(len(module.chips) == 1 and module.chips[0].kind == chGb):
         raise newException(ValueError, "Must only contain 1 Game Boy chip!")
 
@@ -500,9 +498,9 @@ proc toPretAsm(module: Module, useOldMacros: bool = false): string =
             if (pattern.channel.int == channel):
                 result &= "\n.pattern$#\n" % [$pattern.index]
                 for line in pattern2Seq(pattern).seq2Asm(
-                    module.instruments, constName, channel, useOldMacros
+                    module.instruments, constName, channel, useOldMacros, enablePrism
                 ):
                     result &= "\t$#\n" % [line]
 
-proc convertFile*(inFile: string, useOldMacros: bool): string =
-    result = moduleFromFile(inFile).toPretAsm(useOldMacros)
+proc convertFile*(inFile: string, useOldMacros, enablePrism: bool): string =
+    result = moduleFromFile(inFile).toPretAsm(useOldMacros, enablePrism)

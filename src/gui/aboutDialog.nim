@@ -120,13 +120,7 @@ wClass(wAboutDialog of wFrame):
         """
 
         let
-            verlabel = when defined(prism):
-                    self.frmVersionInfo.StaticText(
-                        label=fmt"{VersionMajor}.{VersionMinor} build {VersionBuild} Prism Edition",
-                        style=wAlignCenter or wAlignMiddle
-                    )
-                else:
-                    self.frmVersionInfo.StaticText(
+            verlabel = self.frmVersionInfo.StaticText(
                         label=fmt"{VersionMajor}.{VersionMinor} build {VersionBuild}",
                         style=wAlignCenter or wAlignMiddle
                     )

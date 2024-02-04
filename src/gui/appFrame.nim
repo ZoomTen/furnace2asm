@@ -31,7 +31,7 @@ type
 
         btnHelp, btnAbout, btnExit: wButton
 
-        chkUseOldStyle: wCheckBox
+        chkUseOldStyle, chkUsePrismEffects: wCheckBox
 
         wOpenedFur, wOpenedAsm: string
     
@@ -170,20 +170,13 @@ wClass(wMyAppFrame of wFrame):
             ).showModal()
         else:
             try:
-                when not defined(prism):
-                    writeFile(
-                        self.wOpenedAsm,
-                        convertFile(
-                            self.wOpenedFur, self.chkUseOldStyle.isChecked()
-                        ).replace("\n","\r\n")
-                    )
-                else:
-                    writeFile(
-                        self.wOpenedAsm,
-                        convertFile(
-                            self.wOpenedFur, true # always use old-style macros
-                        ).replace("\n","\r\n")
-                    )
+                writeFile(
+                    self.wOpenedAsm,
+                    convertFile(
+                        self.wOpenedFur, self.chkUseOldStyle.isChecked(),
+                        self.chkUsePrismEffects.isChecked(),
+                    ).replace("\n","\r\n")
+                )
                 discard self.MessageDialog(
                     message="Successfully converted! You may want to edit the resulting file.",
                     caption="Success",
@@ -195,6 +188,13 @@ wClass(wMyAppFrame of wFrame):
                     caption=fmt"{e.name}",
                     style=wIconErr
                 ).showModal()
+    
+    proc switchPrismFx(self: wMyAppFrame) =
+        if self.chkUsePrismEffects.isChecked():
+            self.chkUseOldStyle.setValue(true)
+            self.chkUseOldStyle.disable()
+        else:
+            self.chkUseOldStyle.enable()
     
     proc attachControls(self: wMyAppFrame) =
         self.btnOpenFur.wEvent_Button do ():
@@ -220,7 +220,10 @@ wClass(wMyAppFrame of wFrame):
         
         self.btnConvert.wEvent_Button do ():
             self.doConvert()
-    
+
+        self.chkUsePrismEffects.wEvent_CheckBox do ():
+            self.switchPrismFx()
+
     proc initControls(self: wMyAppFrame) =
         block addHeaders:
             self.lblSourceFurHeader = self.canvas.StaticText(
@@ -290,18 +293,17 @@ wClass(wMyAppFrame of wFrame):
             self.btnAbout.setBitmap4Margins (8,8,0,8)
             self.btnExit.setBitmap4Margins (8,8,0,8)
         block addMisc:
-            when not defined(prism):
-                self.chkUseOldStyle = self.canvas.CheckBox(
-                    label="Use old pret macros",
-                    pos=(160, 385), size=(305, 24)
-                )
-                self.chkUseOldStyle.setBackgroundColor wWhite
-            else:
-                let lblPrismEdition = self.canvas.StaticText(
-                    label="Prism Edition",
-                    pos=(160, 385), size=(305, 24)
-                )
-                lblPrismEdition.setBackgroundColor wWhite
+            self.chkUseOldStyle = self.canvas.CheckBox(
+                label="Use old pret macros",
+                pos=(160, 385), size=(305, 24)
+            )
+            self.chkUseOldStyle.setBackgroundColor wWhite
+            
+            self.chkUsePrismEffects = self.canvas.CheckBox(
+                label="Convert for Pokemon Prism engine",
+                pos=(160, 410), size=(305, 24)
+            )
+            self.chkUsePrismEffects.setBackgroundColor wWhite
     
     proc updateDisplay(self: wMyAppFrame) =
         self.dcContext.clear()

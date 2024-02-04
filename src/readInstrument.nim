@@ -23,7 +23,11 @@ proc readDev127Feature(instrument, stream): Ins2Feature =
             code: parseEnum[Ins2FeatureCode](featureCode)
         )
     except ValueError:
-        raise newException(ValueError, "Unknown feature code \"" & featureCode & "\" in instrument " & instrument.index.toHex(2))
+        let message: string = case featureCode
+            of "WS": "wave synth not supported"
+            else: "not implemented"
+        
+        raise newException(ValueError, "Unknown feature code \"" & featureCode & "\" in instrument " & instrument.index.toHex(2) & " (" & message & ")")
     if result.code == fcEnd:
         return result
     let insContentSize = stream.read(uint16)
