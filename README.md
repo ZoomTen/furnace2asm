@@ -14,7 +14,6 @@ Make sure to click the Help button for more info :p
 
 Dependencies:
   * [Nim](https://nim-lang.org/) 1.6.0+
-    * **Note:** 2.0.0 seems to break compatiblity with XP... (complains about `GetTickCount64` even when `-D_WIN32_WINNT=0x501` is set)
   * Nimble (should come with Nim)
 
 to build CLI only (all platforms):
@@ -33,5 +32,3 @@ Cross compiling (works on my machine):
 ```
 nimble -d:withGui -d:mingw makeRelease
 ```
-
-Add `-d:prism` for PkPr development
