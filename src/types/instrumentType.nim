@@ -13,6 +13,7 @@ type
         fcMacro = "MA"
         fcGb = "GB"
         fcSample = "SM"
+        fcNesDpcm = "NE"
     
     Ins2GbFlag* = enum
         gbSoftwareEnvelope

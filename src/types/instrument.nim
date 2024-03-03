@@ -31,6 +31,8 @@ type
             macroList*: seq[Ins2Macro]
         of fcSample: # XXX IGNORED
             discard
+        of fcNesDpcm: # XXX IGNORED
+            discard
         of fcEnd:
             discard
     

@@ -44,6 +44,12 @@ proc readDev127Feature(instrument, stream): Ins2Feature =
             sample = insContents.read(uint16).int
             flags = insContents.read(uint8).int
             waveformLen = insContents.read(uint8).int
+    of fcNesDpcm: # XXX IGNORED
+        let
+            sampleMap = insContents.read(uint8).int
+        if sampleMap != 0:
+            for i in 1..120:
+                discard insContents.read(uint16)
     of fcGb:
         let
             env  = insContents.read(uint8).int
