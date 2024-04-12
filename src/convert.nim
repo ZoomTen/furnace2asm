@@ -182,6 +182,13 @@ proc seq2Asm(
     insChanged = false
     currentArp = -1
 
+  # reset everything at the beginning except for
+  # the wave channel where it might be useful to retain
+  # this info between patterns
+  if channelNumber != 2:
+    currentInstrument = -1
+    currentVolume = 15
+
   for row in safeNoteBin:
     insChanged = false
 
@@ -415,7 +422,6 @@ proc toPretAsm(
   for channel, order in module.order.pairs():
     currentInstrument = -1
     currentVolume = 15
-
     orderIdx = 0
 
     result &= "\nMusic_$#_Ch$#:\n" % [songName, $(channel + 1)]
