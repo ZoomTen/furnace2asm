@@ -10,11 +10,7 @@ when isMainModule:
     app_frm = MyAppFrame()
 
   when defined(fancyEffects):
-    AnimateWindow(
-      app_frm.mHwnd,
-      500,
-      AW_ACTIVATE or AW_BLEND
-    )
+    AnimateWindow(app_frm.mHwnd, 500, AW_ACTIVATE or AW_BLEND)
   else:
     app_frm.show()
 

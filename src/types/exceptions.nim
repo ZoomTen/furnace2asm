@@ -1,3 +1,3 @@
 type
-    WrongVersionError* = object of CatchableError
-    NotImplementedError* = object of CatchableError
+  WrongVersionError* = object of CatchableError
+  NotImplementedError* = object of CatchableError
