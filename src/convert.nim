@@ -29,6 +29,7 @@ var
   noteTypeDefined = false
   currentInstrument = -1
   currentVolume: range[0 .. 15] = 15
+  dutyMacroCommandUsedOnce = false
 
 proc moduleSpeedToGfTempo(timing: TimingInfo): int =
   # bpmify
@@ -181,6 +182,7 @@ proc seq2Asm(
     currentStereo = -1
     insChanged = false
     currentArp = -1
+    currentDutyCycleMacro = none(seq[int])
 
   # reset everything at the beginning except for
   # the wave channel where it might be useful to retain
@@ -201,6 +203,41 @@ proc seq2Asm(
       if (currentVolume != row.volume) and (row.volume != -1):
         currentVolume = row.volume
         insChanged = true
+
+      if currentInstrument != -1:
+        let dutyMacro = collect(newSeq()):
+          for feature in instruments[currentInstrument].features:
+            if feature.code == fcMacro:
+              for m in feature.macroList:
+                if m.kind == mcDuty:
+                  if m.data.len == 4:
+                    m.data
+        if dutyMacro.len >= 1:
+          dutyMacroCommandUsedOnce = true
+          if currentDutyCycleMacro.isNone or
+              (
+                currentDutyCycleMacro.isSome and
+                (dutyMacro[0] != currentDutyCycleMacro.get)
+              ):
+            currentDutyCycleMacro = dutyMacro[0].some
+            result.add(
+              if useOldMacros:
+                "sound_duty $#, $#, $#, $#" % [
+                  $(currentDutyCycleMacro.get()[3]),
+                  $(currentDutyCycleMacro.get()[2]),
+                  $(currentDutyCycleMacro.get()[1]),
+                  $(currentDutyCycleMacro.get()[0]),
+                ]
+              else:
+                "duty_cycle_pattern $#, $#, $#, $#" % [
+                  $(currentDutyCycleMacro.get()[0]),
+                  $(currentDutyCycleMacro.get()[1]),
+                  $(currentDutyCycleMacro.get()[2]),
+                  $(currentDutyCycleMacro.get()[3]),
+                ]
+            )
+        else:
+          currentDutyCycleMacro = none(seq[int])
 
     block processEffects:
       # change waveform ONLY thru 10xx
@@ -226,9 +263,17 @@ proc seq2Asm(
           currentDuty = newDuty.get
           result.add(
             if useOldMacros:
-              "dutycycle $#" % [$currentDuty]
+              if dutyMacroCommandUsedOnce:
+                "sound_duty $#, $#, $#, $#" %
+                  [$currentDuty, $currentDuty, $currentDuty, $currentDuty]
+              else:
+                "dutycycle $#" % [$currentDuty]
             else:
-              "duty_cycle $#" % [$currentDuty]
+              if dutyMacroCommandUsedOnce:
+                "duty_cycle_pattern $#, $#, $#, $#" %
+                  [$currentDuty, $currentDuty, $currentDuty, $currentDuty]
+              else:
+                "duty_cycle $#" % [$currentDuty]
           )
       # apply stereo effects
       let newStereo = row.findCertainEffect(0x08)
@@ -423,6 +468,7 @@ proc toPretAsm(
     currentInstrument = -1
     currentVolume = 15
     orderIdx = 0
+    dutyMacroCommandUsedOnce = false
 
     result &= "\nMusic_$#_Ch$#:\n" % [songName, $(channel + 1)]
 
