@@ -110,7 +110,7 @@ wClass(wAboutDialog of wFrame):
         """
 
     let verlabel = self.frmVersionInfo.StaticText(
-      label = fmt"{VersionMajor}.{VersionMinor} build {VersionBuild}",
+      label = fmt"Furnace2Asm {VersionMajor}.{VersionMinor}.{VersionBuild}",
       style = wAlignCenter or wAlignMiddle,
     )
 
