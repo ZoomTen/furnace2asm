@@ -55,8 +55,9 @@ What you **should do** to ensure your project is converted properly:
 
 -  When cutting a pattern short, have a ``0D00`` effect on **all
    channels**, not just one of them.
--  Use a single ``0Bxx`` effect in the entire composition, and ensure
+-  If you want your track to loop, use a single ``0Bxx`` effect in the entire composition, and ensure
    that it is at the end of the track.
+-  Omit the ``0Bxx`` effect if you do not want your track to loop.
 -  Name the song in the Song Info tab. This will be used for the labels
    and constant names, e.g. ``Cinna bar island`` will be converted to
    ``CinnaBarIsland`` and ``CINNA_BAR_ISLAND``.
