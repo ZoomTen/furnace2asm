@@ -15,6 +15,8 @@ proc toTitle*(str: string): string =
   ##[
         Converts a space separated word into Almost Title Case
     ]##
+  if str == "":
+    raise newException(Exception, "No title set! Please set one in Song Info.")
   result = ""
   for word in str.split(" "):
     result &= word[0].toUpperAscii()
