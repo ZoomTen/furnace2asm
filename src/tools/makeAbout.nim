@@ -11,8 +11,9 @@ echo """
 		h1{font-style:italic;text-align:center;}
 		li{margin-bottom:.5em;}
 		b{background-color:#ff0;color:#000;}
-		code, tt, pre{background-color:#eee;color:#000;padding: .15em .25em;border:1px solid #ddd}
-	</style>
+		code, tt, pre{font-family:courier,monospace;background-color:#eee;color:#000;padding: .15em .25em;border:1px solid #ddd}
+        pre{overflow:auto;}
+    </style>
 </head>
 <body>
 """
