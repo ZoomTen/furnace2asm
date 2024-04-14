@@ -13,6 +13,7 @@ echo """
 		b{background-color:#ff0;color:#000;}
 		code, tt, pre{font-family:courier,monospace;background-color:#eee;color:#000;padding: .15em .25em;border:1px solid #ddd}
         pre{overflow:auto;}
+        tt{display:inline-block;}
     </style>
 </head>
 <body>
