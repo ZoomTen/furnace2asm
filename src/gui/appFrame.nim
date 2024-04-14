@@ -249,7 +249,9 @@ wClass(wMyAppFrame of wFrame):
         self.canvas.Button(label = "Convert :)", pos = (480, 385), size = (80, 30))
 
       self.btnOpenFur.setIcon Icon(icoOpen)
-      self.btnOpenAsm.setIcon Icon(icoOk)
+      self.btnOpenAsm.setIcon Icon(icoOpen)
+
+      self.btnConvert.setIcon Icon(icoOk)
 
       self.btnHelp =
         self.canvas.Button(label = "Help", pos = (35, 260), size = (100, 40))
