@@ -62,8 +62,8 @@ proc pattern2Seq(pattern: Pattern): NoteSeq =
       pattern.rows
 
   var
-    noteSignature: (Note, uint16)
-    previousNoteSignature: (Note, uint16)
+    noteSignature: NoteSignature
+    previousNoteSignature: NoteSignature
     rowAssocWithPrevNoteSig: Row
     noteLength: int
 
@@ -128,6 +128,20 @@ proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inli
       result = some(listEffects[0])
   else:
     result = none(int16)
+
+func transposeNote(note: NoteSignature, n: int): NoteSignature =
+  var
+    (octaveOffset, noteOffset) = divmod(n, 12)
+    newNote = note.note.int + noteOffset
+  if newNote > nC.int:
+    newNote = newNote - nC.int
+  elif newNote < nCs.int:
+    newNote += nC.int
+  # I'm not sure about this case. :deflatemask:
+  if n < 0:
+    if newNote < note.note.int:
+      octaveOffset -= 1
+  return (note: Note(newNote), octave: uint16(int(note.octave) + octaveOffset))
 
 proc seq2Asm(
     sequence: NoteSeq,
@@ -240,13 +254,13 @@ proc seq2Asm(
           currentDutyCycleMacro = none(seq[int])
 
     block processEffects:
-      # change waveform ONLY thru 10xx
+      # change waveform (10xx)
       if channelNumber == 2:
         let newWaveIns = row.findCertainEffect(0x10)
         if newWaveIns.isSome and (newWaveIns.get != currentWaveId):
           currentWaveId = newWaveIns.get
           insChanged = true
-      # pitch offset
+      # pitch offset (E5xx), xx = 80 -> normal tuning
       let newPitch = row.findCertainEffect(0xe5)
       if newPitch.isSome and (newPitch.get != currentTone):
         currentTone = newPitch.get
@@ -256,7 +270,7 @@ proc seq2Asm(
           else:
             "pitch_offset $#" % [$(currentTone - 0x80)]
         )
-      # change duty cycle ONLY thru 12xx
+      # change duty cycle (12xx)
       if channelNumber <= 1:
         let newDuty = row.findCertainEffect(0x12)
         if newDuty.isSome and (newDuty.get != currentDuty):
@@ -275,7 +289,7 @@ proc seq2Asm(
               else:
                 "duty_cycle $#" % [$currentDuty]
           )
-      # apply stereo effects
+      # apply stereo effects (08xx ONLY)
       let newStereo = row.findCertainEffect(0x08)
       if newStereo.isSome and (newStereo.get != currentStereo):
         if newStereo.get < 0:
@@ -296,7 +310,7 @@ proc seq2Asm(
             ]
         )
       if enablePrism:
-        # apply arp effects
+        # apply arp effects (00xy)
         let newArp = row.findCertainEffect(0x00)
         if newArp.isSome and (newArp.get != currentArp):
           currentArp = newArp.get
@@ -304,12 +318,37 @@ proc seq2Asm(
             newArpX = (currentArp and 0b11110000) shr 4
             newArpY = (currentArp and 0b1111)
           result.add("arp $#, $#" % [$newArpX, $newArpY])
-
-        # apply pitch effects
+        # apply pitch down (02xx) -> Pitch linearity should be set to None!
         if (let newPitchDown = row.findCertainEffect(0x02); newPitchDown.isSome):
           result.add("portadown $#" % [$(newPitchDown.get)])
+        # apply pitch up (01xx) -> Pitch linearity should be set to None!
         if (let newPitchUp = row.findCertainEffect(0x01); newPitchUp.isSome):
           result.add("portaup $#" % [$(newPitchUp.get)])
+        # apply note slide (E1xx)
+        # Does not work as intended :(
+        # let
+        #   newNoteSlideUp = row.findCertainEffect(0xE1)
+        #   newNoteSlideDown = row.findCertainEffect(0xE2)
+        # if newNoteSlideUp.isSome:
+        #   let
+        #     value = newNoteSlideUp.get
+        #     speed = (value and 0b11110000) shr 4
+        #     semitones = (value and 0b1111)
+        #     noteTo = transposeNote(row.noteSignature, semitones)
+        #   result.add(
+        #     "slidepitchto $#, $#, $#" %
+        #       [$speed, $noteTo.octave, mapNote2Const[noteTo.note]]
+        #   )
+        # elif newNoteSlideDown.isSome:
+        #   let
+        #     value = newNoteSlideDown.get
+        #     speed = (value and 0b11110000) shr 4
+        #     semitones = -(value and 0b1111)
+        #     noteTo = transposeNote(row.noteSignature, semitones)
+        #   result.add(
+        #     "slidepitchto $#, $#, $#" %
+        #       [$speed, $noteTo.octave, mapNote2Const[noteTo.note]]
+        #   )
 
     if insChanged:
       case channelNumber

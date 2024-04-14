@@ -3,8 +3,10 @@
 import ./notes
 
 type
+  NoteSignature* = tuple[note: Note, octave: uint16]
+
   NoteSeqCommand* = object
-    noteSignature*: (Note, uint16)
+    noteSignature*: NoteSignature
     length*: int
     instrument*: int16
     volume*: int16
