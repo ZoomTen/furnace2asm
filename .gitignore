@@ -1,4 +1,4 @@
-*.fur
+src/gui/images/helpText.html
 *.asm
 *.exe
 *.res

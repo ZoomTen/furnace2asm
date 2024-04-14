@@ -78,6 +78,7 @@ task makeDevel, "Make development build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
+    selfExec "r src/tools/makeAbout.nim > src/gui/images/helpText.html"
     selfExec fmt"c {mmFlag} --app:gui {mingwFlag} {winxpFlag} --threads:off -o:{outFile} {mainGuiFile}"
   when not defined(guiOnly):
     selfExec fmt"c {mmFlag} --app:console {mingwFlag} {winxpFlag} --threads:off -o:{outCliFile} {mainCliFile}"
@@ -91,6 +92,7 @@ task makeRelease, "Make release build":
   when defined(withGui):
     when not defined(windows) or not defined(mingw):
       {.fatal: "GUI build is Windows-only! If cross compiling from another system, pass -d:mingw!".}
+    selfExec "r src/tools/makeAbout.nim > src/gui/images/helpText.html"
     selfExec fmt"""c {mmFlag} --app:gui -d:danger {mingwFlag} {winxpFlag} --threads:off --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outFile} {mainGuiFile}"""
   when not defined(guiOnly):
     selfExec fmt"""c {mmFlag} --app:console -d:danger {mingwFlag} {winxpFlag} --threads:off --passC:"{cFlags.join($' ')}" --passL:"{ldFlags.join($' ')}" -o:{outCliFile} {mainCliFile}"""
