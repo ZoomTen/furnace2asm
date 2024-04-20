@@ -144,6 +144,11 @@ proc readInfo(module, stream, ptrs) {.inline.} =
     module.miscInfo.extendedCompatFlags &= stream.readStr(1)
   if module.meta.version >= 83:
     module.miscInfo.extendedCompatFlags &= stream.readStr(2)
+  if module.meta.version >= 96:
+    module.miscInfo.extendedCompatFlags &= stream.readStr(19)
+    module.timing.virtualTempo = (
+      stream.read(uint16), stream.read(uint16)
+    )
 
 proc readInstruments(module, stream, ptrs) {.inline.} =
   var insCounter = 0

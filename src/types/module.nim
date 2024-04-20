@@ -16,6 +16,7 @@ type
     highlight*: (uint8, uint8)
     speed*: (uint8, uint8)
     timeBase*: uint8
+    virtualTempo*: (uint16, uint16)
 
   ChipInfo* = object
     kind*: ChipType

@@ -35,7 +35,8 @@ proc moduleSpeedToGfTempo(timing: TimingInfo): int =
   # bpmify
   let bpm = (
     (120.0 * timing.clockSpeed) /
-    ((timing.timeBase + 1) * 4 * (timing.speed[0] + timing.speed[1])).float
+    ((timing.timeBase + 1) * 4 * (timing.speed[0] + timing.speed[1])).float *
+    (timing.virtualTempo[0].float / timing.virtualTempo[1].float)
   )
   result = int(19296 / bpm)
 
