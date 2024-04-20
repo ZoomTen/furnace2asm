@@ -26,6 +26,7 @@ const mapNote2Const: Table[Note, string] = [
 ].toTable()
 
 var
+  currentWaveId = 0
   noteTypeDefined = false
   currentInstrument = -1
   currentVolume: range[0 .. 15] = 15
@@ -190,7 +191,6 @@ proc seq2Asm(
       safeNoteBin.add(note)
 
   var
-    currentWaveId = -1
     currentOctave = -1
     currentTone = -1
     currentDuty = -1
@@ -403,13 +403,15 @@ proc seq2Asm(
             if useOldMacros:
               "intensity $$$#" % [((envByte[0] shl 4) + envByte[1]).toHex(2)]
             else:
-              "intensity $#, $#" % [$envByte[0], $envByte[1]]
+              "volume_envelope $#, $#" % [$envByte[0], $envByte[1]]
           )
         else:
           result.add(
             if useOldMacros:
+              noteTypeDefined = true
               "notetype 12, $$$#" % [((envByte[0] shl 4) + envByte[1]).toHex(2)]
             else:
+              noteTypeDefined = true
               "note_type 12, $#, $#" % [$envByte[0], $envByte[1]]
           )
       of 3: # noise channel, don't feel like doing anything
@@ -505,6 +507,7 @@ proc toPretAsm(
   var orderIdx: int
 
   for channel, order in module.order.pairs():
+    currentWaveId = 0
     currentInstrument = -1
     currentVolume = 15
     orderIdx = 0
@@ -529,7 +532,16 @@ proc toPretAsm(
       )
     else:
       result &= (
-        if useOldMacros: "\tnotetype 12, $00\n" else: "\tnote_type 12, 15, 0\n"
+        if useOldMacros: 
+          if channel == 2:
+            "\tnotetype 12, $10\n"
+          else:
+            "\tnotetype 12, $00\n"
+        else:
+          if channel == 2:
+            "\tnote_type 12, 1, 0\n"
+          else:
+            "\tnote_type 12, 15, 0\n"
       )
 
     for patnum in order:
