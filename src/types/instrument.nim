@@ -33,6 +33,12 @@ type
       discard
     of fcNesDpcm: # XXX IGNORED
       discard
+    of fcEsfm: # XXX IGNORED
+      discard
+    of fcFm: # XXX IGNORED
+      discard
+    of fcOpllD: # XXX IGNORED
+      discard
     of fcEnd:
       discard
 

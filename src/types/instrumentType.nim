@@ -14,6 +14,9 @@ type
     fcGb = "GB"
     fcSample = "SM"
     fcNesDpcm = "NE"
+    fcFm = "FM"
+    fcOpllD = "LD"
+    fcEsfm = "EF"
 
   Ins2GbFlag* = enum
     gbSoftwareEnvelope

@@ -99,6 +99,12 @@ proc readDev127Feature(instrument, stream): Ins2Feature =
             newMacro.data.add(int(insContents.read(int32)))
 
         result.macroList.add(newMacro)
+  of fcFm:
+    discard
+  of fcEsfm:
+    discard
+  of fcOpllD:
+    discard
   of fcEnd:
     discard
 
