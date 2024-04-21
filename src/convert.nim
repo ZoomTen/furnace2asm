@@ -31,6 +31,7 @@ var
   currentInstrument = -1
   currentVolume: range[0 .. 15] = 15
   dutyMacroCommandUsedOnce = false
+  globalTiming: TimingInfo
 
 proc moduleSpeedToGfTempo(timing: TimingInfo): int =
   # bpmify
@@ -254,6 +255,7 @@ proc seq2Asm(
         else:
           currentDutyCycleMacro = none(seq[int])
 
+    # each effect must be tied to a note!
     block processEffects:
       # change waveform (10xx)
       if channelNumber == 2:
@@ -310,6 +312,12 @@ proc seq2Asm(
               if newStereoRight: "TRUE" else: "FALSE",
             ]
         )
+      # apply speed effects (0Fxx)
+      let newTempo = row.findCertainEffect(0x0f)
+      if newTempo.isSome:
+        var newTimingInfo = globalTiming
+        newTimingInfo.speed = (newTempo.get.uint8, newTempo.get.uint8)
+        result.add("tempo $#" % [$moduleSpeedToGfTempo(newTimingInfo)])
       if enablePrism:
         # apply arp effects (00xy)
         let newArp = row.findCertainEffect(0x00)
@@ -463,6 +471,8 @@ proc toPretAsm(
     songName = module.meta.name.toTitle()
     constName = module.meta.name.toUpper().replace(" ", "_")
 
+  globalTiming = module.timing
+
   result &= "Music_$#:\n" % [songName]
 
   # always 4 channels, GSC format
@@ -532,16 +542,10 @@ proc toPretAsm(
       )
     else:
       result &= (
-        if useOldMacros: 
-          if channel == 2:
-            "\tnotetype 12, $10\n"
-          else:
-            "\tnotetype 12, $00\n"
+        if useOldMacros:
+          if channel == 2: "\tnotetype 12, $10\n" else: "\tnotetype 12, $00\n"
         else:
-          if channel == 2:
-            "\tnote_type 12, 1, 0\n"
-          else:
-            "\tnote_type 12, 15, 0\n"
+          if channel == 2: "\tnote_type 12, 1, 0\n" else: "\tnote_type 12, 15, 0\n"
       )
 
     for patnum in order:
