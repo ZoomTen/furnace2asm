@@ -75,9 +75,9 @@ Additional effects supported when enabling Pokemon Prism engine output:
 
 -  ``00xy``: Arpeggio
 -  ``01xx``: Pitch slide up. Ensure “Pitch Linearity” (under
-   Compatibility Flags) is set to “Linear” for a 1:1 output.
+   Compatibility Flags) is set to “None” for a 1:1 output.
 -  ``02xx``: Pitch slide down. Ensure “Pitch Linearity” (under
-   Compatibility Flags) is set to “Linear” for a 1:1 output.
+   Compatibility Flags) is set to “None” for a 1:1 output.
 
 Duty cycle pattern effects are supported through the use of the
 Duty/Noise macro. This macro **must** have a length of 4.
