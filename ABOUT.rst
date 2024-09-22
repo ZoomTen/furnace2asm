@@ -66,6 +66,8 @@ What you **should do** to ensure your project is converted properly:
 
 List of supported effects:
 
+-  ``04xy``: Vibrato. This might not work as expected, you should instead
+   add vibrato manually.
 -  ``08xy``: Channel panning.
 -  ``10xx``: Change waveform.
 -  ``12xx``: Change duty cycle.

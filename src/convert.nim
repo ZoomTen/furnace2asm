@@ -318,6 +318,21 @@ proc seq2Asm(
         var newTimingInfo = globalTiming
         newTimingInfo.speed = (newTempo.get.uint8, newTempo.get.uint8)
         result.add("tempo $#" % [$moduleSpeedToGfTempo(newTimingInfo)])
+
+      # apply vibrato effects (04xy) -- do NOT use this for delayed vibrato!!
+      let newVibrato = row.findCertainEffect(0x04)
+      if newVibrato.isSome:
+        let
+          vibValue = newVibrato.get
+          speed = (vibValue shr 4)
+          depth = (vibValue and 0b1111)
+        result.add(
+          if useOldMacros:
+            "vibrato 0, $$$#" % [((depth shl 4) or speed).uint8.toHex()]
+          else:
+            "vibrato 0, $#, $#" % [$depth, $speed]
+        )
+
       if enablePrism:
         # apply arp effects (00xy)
         let newArp = row.findCertainEffect(0x00)
