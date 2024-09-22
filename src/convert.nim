@@ -507,36 +507,18 @@ proc toPretAsm(
 
   for i in drumInstruments:
     if useOldMacros:
-      result &= "$#DRUM_$#_$#\tEQU\tC_\n" % [
-        (
-          if (not useOldMacros) or enablePrism:
-            "DEF "
-          else:
-            ""
-        ),
-        constName, i.toHex(2)
-      ]
+      result &=
+        "$#DRUM_$#_$#\tEQU\tC_\n" %
+        [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName, i.toHex(2)]
     else:
-      result &= "$#DRUM_$#_$#\tEQU\t$$00\n" % [
-        (
-          if (not useOldMacros) or enablePrism:
-            "DEF "
-          else:
-            ""
-        ),
-        constName, i.toHex(2)
-      ]
+      result &=
+        "$#DRUM_$#_$#\tEQU\t$$00\n" %
+        [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName, i.toHex(2)]
 
   result &= "\n; Drumset to use, replace with the proper value\n"
-  result &= "$#DRUMSET_$#\tEQU\t$$00\n" % [
-    (
-      if (not useOldMacros) or enablePrism:
-        "DEF "
-      else:
-        ""
-    ),
-    constName
-  ]
+  result &=
+    "$#DRUMSET_$#\tEQU\t$$00\n" %
+    [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName]
 
   var orderIdx: int
 
