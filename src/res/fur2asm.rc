@@ -1,6 +1,6 @@
 1 VERSIONINFO
- FILEVERSION    0,1,5,0
- PRODUCTVERSION 0,1,5,0
+ FILEVERSION    0,1,6,0
+ PRODUCTVERSION 0,1,6,0
 BEGIN
  BLOCK "VarFileInfo"
  BEGIN
@@ -15,11 +15,11 @@ BEGIN
 	VALUE "OriginalFilename", "fur2asm.exe"
 	VALUE "FileDescription", "Convert Furnace project files to pret assembly source files"
 	
-    VALUE "ProductVersion", "0.1.5"
-    VALUE "FileVersion", "0.1.5"
+    VALUE "ProductVersion", "0.1.6"
+    VALUE "FileVersion", "0.1.6"
 	
     VALUE "CompanyName", "Zumi"
-	VALUE "LegalCopyright", "2024 Zumi"
+	VALUE "LegalCopyright", "2026 Zumi"
    END
  END
 END
