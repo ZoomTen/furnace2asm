@@ -33,7 +33,6 @@ ignored or have unpredictable results:
 -  Panning using ``80xx``. Use the ``08xy`` effect instead.
 -  Manual vibrato using ``04xy``.
 -  Subsongs.
--  ``EDxx``. If you wanted triplets, sorry about that.
 -  Macros other than duty cycle patterns (read further on). For volume
    control, only the dedicated Game Boy envelope editing features are
    supported.
@@ -55,7 +54,7 @@ What you **should do** to ensure your project is converted properly:
 
 -  When cutting a pattern short, have a ``0D00`` effect on **all
    channels**, not just one of them.
--  If you want your track to loop, use a single ``0Bxx`` effect in the entire composition, and ensure
+-  If you want your track to loop, use a **single** ``0Bxx`` effect in the entire composition, and ensure
    that it is at the end of the track.
 -  Omit the ``0Bxx`` effect if you do not want your track to loop.
 -  Name the song in the Song Info tab. This will be used for the labels
@@ -63,6 +62,7 @@ What you **should do** to ensure your project is converted properly:
    ``CinnaBarIsland`` and ``CINNA_BAR_ISLAND``.
 -  Determine explicitly what to do with notes longer than 16 rows (do
    you want to tie multiple notes together or to cut?)
+-  Use **a single speed** if you want to use the ``EDxx`` effect.
 
 List of supported effects:
 
@@ -72,6 +72,7 @@ List of supported effects:
 -  ``10xx``: Change waveform.
 -  ``12xx``: Change duty cycle.
 -  ``E5xx``: Pitch offset, where normal tuning is ``xx = 80``.
+-  ``EDxx``: Note delay. This is useful for creating triplets.
 
 Additional effects supported when enabling Pokemon Prism engine output:
 

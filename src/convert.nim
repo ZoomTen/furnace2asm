@@ -25,13 +25,20 @@ const mapNote2Const: Table[Note, string] = [
   (nUnknown, "__"),
 ].toTable()
 
+#[ `fade` is instead the wavetable ID for the wave channel ]#
+type Envelope = tuple[start: range[0..15], fade: int]
+
 var
-  currentWaveId = 0
-  noteTypeDefined = false
+  noteTypeDefined = false #[ used to determine whether or not to use `intensity` for envelope changes]#
   currentInstrument = -1
-  currentVolume: range[0 .. 15] = 15
   dutyMacroCommandUsedOnce = false
   globalTiming: TimingInfo
+  currentVolume = -1 #[ Furnace volume column ]#
+  currentEnvelope: Envelope = (15, 0)
+
+#[ a.k.a. the first parameter of `note_type`. ]#
+const baseUnitTicks = 12 #[ represents a 1/16th note, or one whole row ]#
+var currentUnitTicks = baseUnitTicks
 
 proc moduleSpeedToGfTempo(timing: TimingInfo): int =
   # bpmify
@@ -42,7 +49,9 @@ proc moduleSpeedToGfTempo(timing: TimingInfo): int =
   )
   result = int(19296 / bpm)
 
-proc pattern2Seq(pattern: Pattern): NoteSeq =
+proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inline.}
+
+proc pattern2Seq(pattern: Pattern, moduleSpeed: int): NoteSeq =
   result = @[]
   # Find where the pattern cuts short
 
@@ -64,62 +73,53 @@ proc pattern2Seq(pattern: Pattern): NoteSeq =
     else:
       pattern.rows
 
-  var
-    noteSignature: NoteSignature
-    previousNoteSignature: NoteSignature
-    rowAssocWithPrevNoteSig: Row
-    noteLength: int
+  var cmd: NoteSeqCommand
+  for rowNumber, row in enumerate(cutRows):
+    cmd.noteSignature = (row.note, row.octave.uint16)
+    #[ Previously, `length` meant "how many rows does this
+       note span?". This was very limiting and made triplets
+       essentially impossible.
+       
+       What I *should have done instead* was make the length
+       a factor of the speed initially, and then have the EDxx
+       commands modify them. ]#
+    cmd.length = moduleSpeed
+    
+    #[ Furthermore, playing with "row associated with previous
+       note signature" or whatever made the logic quite brittle. ]#
+    cmd.volume = row.volume
+    cmd.effects = row.effects
+    cmd.instrument = row.instrument
 
-  for rowNumber, row in enumerate(cutRows): # what a handful
-    noteSignature = (row.note, row.octave.uint16)
+    #[ Since the length is now expressed in absolute ticks, the
+       note delays are processed here. ]#
+    let delayEffect = cmd.findCertainEffect(0xED)
 
-    if rowNumber == 0: # first row
-      previousNoteSignature = noteSignature
-      rowAssocWithPrevNoteSig = row
-      noteLength = 1
-    elif rowNumber == cutRows.len - 1:
-      if noteSignature == (nBlank, 0'u16):
-        noteLength += 1
+    if row.note == nBlank:
+      if len(result) > 0:
+        #[ Each additional blank row increases the length
+           of the previous note instead. ]#
+        result[^1].length += moduleSpeed
       else:
-        result.add(
-          NoteSeqCommand(
-            noteSignature: previousNoteSignature,
-            length: noteLength,
-            instrument: rowAssocWithPrevNoteSig.instrument,
-            volume: rowAssocWithPrevNoteSig.volume,
-            effects: rowAssocWithPrevNoteSig.effects,
-          )
-        )
-        noteLength = 1
-        previousNoteSignature = noteSignature
-        rowAssocWithPrevNoteSig = row
-      result.add(
-        NoteSeqCommand(
-          noteSignature: previousNoteSignature,
-          length: noteLength,
-          instrument: rowAssocWithPrevNoteSig.instrument,
-          volume: rowAssocWithPrevNoteSig.volume,
-          effects: rowAssocWithPrevNoteSig.effects,
-        )
-      )
-    else:
-      if noteSignature == (nBlank, 0'u16):
-        noteLength += 1
-      else:
-        result.add(
-          NoteSeqCommand(
-            noteSignature: previousNoteSignature,
-            length: noteLength,
-            instrument: rowAssocWithPrevNoteSig.instrument,
-            volume: rowAssocWithPrevNoteSig.volume,
-            effects: rowAssocWithPrevNoteSig.effects,
-          )
-        )
-        previousNoteSignature = noteSignature
-        rowAssocWithPrevNoteSig = row
-        noteLength = 1
+        #[ Nothing is present, so at least add a rest note here. ]#
+        result.add(cmd)
+    else: #[ A note ]#
+      if delayEffect.isSome:
+        #[ Note delays shift THIS note later, which means lengthening
+           the previous note and shortening this note. ]#
+        if len(result) > 0:
+          let delayValue = delayEffect.get.int
+          if delayValue < moduleSpeed:
+            result[^1].length += delayValue
+            cmd.length -= delayValue
+          #[ The delay effect won't take effect if the resulting value
+             makes the current note have a length of 0. Well, we can't
+             have that. For now, regardless of Furnace's actual behavior,
+             it'll just be like nothing happened. ]#
+      #[ After all the adjustments, we can finally add it to the note bin. ]#
+      result.add(cmd)
 
-proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] {.inline.} =
+proc findCertainEffect(row: NoteSeqCommand, effectId: int): Option[int16] =
   let listEffects = collect(newSeq()):
     for effect in row.effects:
       if effect[0] == effectId:
@@ -153,41 +153,26 @@ proc seq2Asm(
     channelNumber: 0 .. 3,
     useOldMacros: bool,
     enablePrism: bool,
+    moduleSpeed: int
 ): seq[string] =
   noteTypeDefined = false
   result = @[]
 
+  #[ handle notes above the supported length of 16 by cloning them ]#
   var safeNoteBin: NoteSeq
-
-  #[
-        handle notes above the supported length of 16
-        by cloning them
-    ]#
   for note in sequence:
-    if note.length > 16:
+    let maxLength = (16 * moduleSpeed)
+    var newCmd = note
+    if note.length > maxLength:
       let
-        noteMult = floorDiv(note.length, 16)
-        noteRemain = floorMod(note.length, 16)
+        noteMult = floorDiv(int(note.length), maxLength)
+        noteRemain = floorMod(note.length, maxLength)
       for i in 1 .. noteMult: # clone notes
-        safeNoteBin.add(
-          NoteSeqCommand(
-            noteSignature: note.noteSignature,
-            length: 16,
-            instrument: note.instrument,
-            volume: note.volume,
-            effects: note.effects,
-          )
-        )
+        newCmd.length = maxLength
+        safeNoteBin.add(newCmd)
       if noteRemain > 0: # add the remainder
-        safeNoteBin.add(
-          NoteSeqCommand(
-            noteSignature: note.noteSignature,
-            length: noteRemain,
-            instrument: note.instrument,
-            volume: note.volume,
-            effects: note.effects,
-          )
-        )
+        newCmd.length = noteRemain
+        safeNoteBin.add(newCmd)
     else:
       safeNoteBin.add(note)
 
@@ -196,7 +181,9 @@ proc seq2Asm(
     currentTone = -1
     currentDuty = -1
     currentStereo = -1
-    insChanged = false
+    insChanged = false #[ triggers output of a note_type or intensity command,
+                          doesn't always have to be because the Furnace instrument
+                          changed ]#
     currentArp = -1
     currentDutyCycleMacro = none(seq[int])
 
@@ -205,10 +192,30 @@ proc seq2Asm(
   # this info between patterns
   if channelNumber != 2:
     currentInstrument = -1
-    currentVolume = 15
 
-  for row in safeNoteBin:
-    insChanged = false
+  for note in safeNoteBin:
+    var row = note
+    #[ express the note length as a multiple of baseUnitTicks ]#
+    let nTicks = int(
+      (float(row.length) / float(moduleSpeed)) * baseUnitTicks
+    )
+    #[ calculate the best unitTicks to handle said note length ]#
+    var candidateUnitTicks = 1
+    for cand in 2..baseUnitTicks:
+      if nTicks mod cand == 0:
+        candidateUnitTicks = cand
+    #[ now make the length relative to this new unit tick ]#
+    row.length = int(float(nTicks) / float(candidateUnitTicks))
+
+    if candidateUnitTicks != currentUnitTicks:
+      currentUnitTicks = candidateUnitTicks
+
+      result.add(
+          if useOldMacros:
+            "notetype $#, $$$#" % [$currentUnitTicks, toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
+          else:
+            "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
+        )
 
     # before anything else, process instruments first
     block processInstruments:
@@ -260,8 +267,8 @@ proc seq2Asm(
       # change waveform (10xx)
       if channelNumber == 2:
         let newWaveIns = row.findCertainEffect(0x10)
-        if newWaveIns.isSome and (newWaveIns.get != currentWaveId):
-          currentWaveId = newWaveIns.get
+        if newWaveIns.isSome and (newWaveIns.get != currentEnvelope.fade):
+          currentEnvelope.fade = newWaveIns.get
           insChanged = true
       # pitch offset (E5xx), xx = 80 -> normal tuning
       let newPitch = row.findCertainEffect(0xe5)
@@ -384,31 +391,32 @@ proc seq2Asm(
             if feature.code == fcGb:
               gbFeature = feature
               break findGbFeature
-          #[
-                        ok, if we can't find one, assume the defaults,
-                        because that happens sometimes
-                    ]#
+          #[ ok, if we can't find one, assume the defaults,
+             because that happens sometimes ]#
           gbFeature =
             Ins2Feature(code: fcGb, envVolume: 15, envLength: 2, envGoesUp: false)
-
-        let
-          startVolume = floor(float(gbFeature.envVolume) * (currentVolume / 15)).int
-          calculatedLength =
-            (gbFeature.envLength or (uint8(gbFeature.envGoesUp) shl 3)).int
+        
+        #[ Furnace quirk: the volume column overrides whatever is defined in the instrument
+           and will stay like that, provided you haven't started playing from an affected
+           pattern but instead from the beginning of the song. ]#
+        currentEnvelope.start =
+          if currentVolume != -1: currentVolume
+          else: gbFeature.envVolume.int
+        currentEnvelope.fade = (gbFeature.envLength or (uint8(gbFeature.envGoesUp) shl 3)).int
 
         result.add(
           if useOldMacros:
             if noteTypeDefined:
-              "intensity $$$#" % [toHex((startVolume shl 4) or calculatedLength, 2)]
+              "intensity $$$#" % [toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
             else:
               noteTypeDefined = true
-              "notetype 12, $$$#" % [toHex((startVolume shl 4) or calculatedLength, 2)]
+              "notetype $#, $$$#" % [$currentUnitTicks, toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
           else:
             if noteTypeDefined:
-              "volume_envelope $#, $#" % [$startVolume, $calculatedLength]
+              "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
             else:
               noteTypeDefined = true
-              "note_type 12, $#, $#" % [$startVolume, $calculatedLength]
+              "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
         )
       of 2: # wave channel has a special note_type
         let
@@ -419,27 +427,28 @@ proc seq2Asm(
             elif currentVolume >= 4: 3
             else: 3
           )
-          envByte = (calculatedVolume, currentWaveId)
+        currentEnvelope.start = calculatedVolume
 
         if noteTypeDefined:
           result.add(
             if useOldMacros:
-              "intensity $$$#" % [((envByte[0] shl 4) + envByte[1]).toHex(2)]
+              "intensity $$$#" % [((currentEnvelope.start shl 4) + currentEnvelope.fade).toHex(2)]
             else:
-              "volume_envelope $#, $#" % [$envByte[0], $envByte[1]]
+              "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
           )
         else:
           result.add(
             if useOldMacros:
               noteTypeDefined = true
-              "notetype 12, $$$#" % [((envByte[0] shl 4) + envByte[1]).toHex(2)]
+              "notetype $#, $$$#" % [$currentUnitTicks, ((currentEnvelope.start shl 4) + currentEnvelope.fade).toHex(2)]
             else:
               noteTypeDefined = true
-              "note_type 12, $#, $#" % [$envByte[0], $envByte[1]]
+              "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
           )
       of 3: # noise channel, don't feel like doing anything
         discard
-
+      insChanged = false
+    
     # add notes
     if channelNumber == 3: # drum channel
       result.add(
@@ -538,9 +547,8 @@ proc toPretAsm(
   var orderIdx: int
 
   for channel, order in module.order.pairs():
-    currentWaveId = 0
     currentInstrument = -1
-    currentVolume = 15
+    currentEnvelope = (15, 0)
     orderIdx = 0
     dutyMacroCommandUsedOnce = false
 
@@ -562,6 +570,8 @@ proc toPretAsm(
           "\tdrum_speed 12\n\ttoggle_noise DRUMSET_$#\n" % [constName]
       )
     else:
+      if channel == 2:
+        currentEnvelope = (1, 0)
       result &= (
         if useOldMacros:
           if channel == 2: "\tnotetype 12, $10\n" else: "\tnotetype 12, $00\n"
@@ -588,8 +598,9 @@ proc toPretAsm(
     for pattern in module.patterns:
       if (pattern.channel.int == channel):
         result &= "\n.pattern$#\n" % [$pattern.index]
-        for line in pattern2Seq(pattern).seq2Asm(
-          module.instruments, constName, channel, useOldMacros, enablePrism
+        for line in pattern2Seq(pattern, globalTiming.speed[0].int).seq2Asm(
+          module.instruments, constName, channel, useOldMacros, enablePrism,
+          globalTiming.speed[0].int
         ):
           result &= "\t$#\n" % [line]
 
