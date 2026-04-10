@@ -30,7 +30,7 @@ type
 
     btnHelp, btnAbout, btnExit: wButton
 
-    chkUseOldStyle, chkUsePrismEffects: wCheckBox
+    chkUseOldStyle, chkUsePrismEffects, chkGen1Compat: wCheckBox
 
     wOpenedFur, wOpenedAsm: string
 
@@ -157,6 +157,7 @@ wClass(wMyAppFrame of wFrame):
             self.wOpenedFur,
             self.chkUseOldStyle.isChecked(),
             self.chkUsePrismEffects.isChecked(),
+            self.chkGen1Compat.isChecked()
           )
           .replace("\n", "\r\n"),
         )
@@ -277,6 +278,11 @@ wClass(wMyAppFrame of wFrame):
         label = "Convert for Pokemon Prism engine", pos = (160, 410), size = (305, 24)
       )
       self.chkUsePrismEffects.setBackgroundColor wWhite
+
+      self.chkGen1Compat = self.canvas.CheckBox(
+        label = "Enable pokered compatibility", pos = (160, 435), size = (305, 24)
+      )
+      self.chkGen1Compat.setBackgroundColor wWhite
 
   proc updateDisplay(self: wMyAppFrame) =
     self.dcContext.clear()

@@ -153,6 +153,7 @@ proc seq2Asm(
     channelNumber: 0 .. 3,
     useOldMacros: bool,
     enablePrism: bool,
+    gen1Compat: bool,
     moduleSpeed: int
 ): seq[string] =
   noteTypeDefined = false
@@ -275,10 +276,15 @@ proc seq2Asm(
       if newPitch.isSome and (newPitch.get != currentTone):
         currentTone = newPitch.get
         result.add(
-          if useOldMacros:
-            "tone $#" % [$(currentTone - 0x80)]
+          if gen1Compat:
+            # parameter is ignored
+            if useOldMacros: "toggleperfectpitch"
+            else: "toggle_perfect_pitch"
           else:
-            "pitch_offset $#" % [$(currentTone - 0x80)]
+            if useOldMacros:
+              "tone $#" % [$(currentTone - 0x80)]
+            else:
+              "pitch_offset $#" % [$(currentTone - 0x80)]
         )
       # change duty cycle (12xx)
       if channelNumber <= 1:
@@ -309,16 +315,17 @@ proc seq2Asm(
         let
           newStereoLeft = bool(currentStereo shr 4)
           newStereoRight = bool(currentStereo and 0b1111)
-        result.add(
-          if useOldMacros:
-            "stereopanning $$$#$#" %
-              [if newStereoLeft: "f" else: "0", if newStereoRight: "f" else: "0"]
-          else:
-            "stereo_panning $#, $#" % [
-              if newStereoLeft: "TRUE" else: "FALSE",
-              if newStereoRight: "TRUE" else: "FALSE",
-            ]
-        )
+        if not gen1Compat:
+          result.add(
+            if useOldMacros:
+              "stereopanning $$$#$#" %
+                [if newStereoLeft: "f" else: "0", if newStereoRight: "f" else: "0"]
+            else:
+              "stereo_panning $#, $#" % [
+                if newStereoLeft: "TRUE" else: "FALSE",
+                if newStereoRight: "TRUE" else: "FALSE",
+              ]
+          )
       # apply speed effects (0Fxx)
       let newTempo = row.findCertainEffect(0x0f)
       if newTempo.isSome:
@@ -405,18 +412,24 @@ proc seq2Asm(
         currentEnvelope.fade = (gbFeature.envLength or (uint8(gbFeature.envGoesUp) shl 3)).int
 
         result.add(
-          if useOldMacros:
-            if noteTypeDefined:
-              "intensity $$$#" % [toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
-            else:
-              noteTypeDefined = true
+          if gen1Compat:
+            if useOldMacros:
               "notetype $#, $$$#" % [$currentUnitTicks, toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
-          else:
-            if noteTypeDefined:
-              "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
             else:
-              noteTypeDefined = true
               "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
+          else:
+            if useOldMacros:
+              if noteTypeDefined:
+                "intensity $$$#" % [toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
+              else:
+                noteTypeDefined = true
+                "notetype $#, $$$#" % [$currentUnitTicks, toHex((currentEnvelope.start shl 4) or currentEnvelope.fade, 2)]
+            else:
+              if noteTypeDefined:
+                "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
+              else:
+                noteTypeDefined = true
+                "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
         )
       of 2: # wave channel has a special note_type
         let
@@ -431,10 +444,16 @@ proc seq2Asm(
 
         if noteTypeDefined:
           result.add(
-            if useOldMacros:
-              "intensity $$$#" % [((currentEnvelope.start shl 4) + currentEnvelope.fade).toHex(2)]
+            if gen1Compat:
+              if useOldMacros:
+                "notetype $#, $$$#" % [$currentUnitTicks, ((currentEnvelope.start shl 4) + currentEnvelope.fade).toHex(2)]
+              else:
+                "note_type $#, $#, $#" % [$currentUnitTicks, $currentEnvelope.start, $currentEnvelope.fade]
             else:
-              "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
+              if useOldMacros:
+                "intensity $$$#" % [((currentEnvelope.start shl 4) + currentEnvelope.fade).toHex(2)]
+              else:
+                "volume_envelope $#, $#" % [$currentEnvelope.start, $currentEnvelope.fade]
           )
         else:
           result.add(
@@ -484,7 +503,8 @@ proc seq2Asm(
   result.add(if useOldMacros: "endchannel" else: "sound_ret")
 
 proc toPretAsm(
-    module: Module, useOldMacros: bool = false, enablePrism: bool = false
+    module: Module, useOldMacros: bool = false, enablePrism: bool = false,
+    gen1Compat: bool = false
 ): string =
   if not (len(module.chips) == 1 and module.chips[0].kind == chGb):
     raise newException(ValueError, "Must only contain 1 Game Boy chip!")
@@ -497,12 +517,13 @@ proc toPretAsm(
 
   globalTiming = module.timing
 
-  result &= "Music_$#:\n" % [songName]
+  if not gen1Compat:
+    result &= "Music_$#:\n" % [songName]
 
-  # always 4 channels, GSC format
-  result &= (if useOldMacros: "\tchannelcount 4\n" else: "\tchannel_count 4\n")
-  for i in 1 .. 4:
-    result &= "\tchannel $#, Music_$#_Ch$#\n" % [$i, songName, $i]
+    # always 4 channels, GSC format
+    result &= (if useOldMacros: "\tchannelcount 4\n" else: "\tchannel_count 4\n")
+    for i in 1 .. 4:
+      result &= "\tchannel $#, Music_$#_Ch$#\n" % [$i, songName, $i]
 
   let
     drumInstruments = collect(initHashSet()):
@@ -539,10 +560,11 @@ proc toPretAsm(
         "$#DRUM_$#_$#\tEQU\t$$00\n" %
         [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName, i.toHex(2)]
 
-  result &= "\n; Drumset to use, replace with the proper value\n"
-  result &=
-    "$#DRUMSET_$#\tEQU\t$$00\n" %
-    [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName]
+  if not gen1Compat:
+    result &= "\n; Drumset to use, replace with the proper value\n"
+    result &=
+      "$#DRUMSET_$#\tEQU\t$$00\n" %
+      [(if (not useOldMacros) or enablePrism: "DEF " else: ""), constName]
 
   var orderIdx: int
 
@@ -552,7 +574,12 @@ proc toPretAsm(
     orderIdx = 0
     dutyMacroCommandUsedOnce = false
 
-    result &= "\nMusic_$#_Ch$#:\n" % [songName, $(channel + 1)]
+    result &= "\nMusic_$#_Ch$#$#\n" % [songName, $(channel + 1),
+      if gen1Compat:
+        "::"
+      else:
+        ":"
+    ]
 
     if channel == 0:
       result &= (
@@ -565,9 +592,15 @@ proc toPretAsm(
     if channel == 3: # noise channel
       result &= (
         if useOldMacros:
-          "\tnotetype 12\n\ttogglenoise DRUMSET_$#\n" % [constName]
+          if gen1Compat:
+            "\tnotetype 12\n"
+          else:
+            "\tnotetype 12\n\ttogglenoise DRUMSET_$#\n" % [constName]
         else:
-          "\tdrum_speed 12\n\ttoggle_noise DRUMSET_$#\n" % [constName]
+          if gen1Compat:
+            "\tdrum_speed 12\n"
+          else:
+            "\tdrum_speed 12\n\ttoggle_noise DRUMSET_$#\n" % [constName]
       )
     else:
       if channel == 2:
@@ -590,7 +623,10 @@ proc toPretAsm(
     result &=
       "\t$#\n" % [
         if loopPoint != -1:
-          if useOldMacros: "jumpchannel .loop" else: "sound_jump .loop"
+          if gen1Compat:
+            if useOldMacros: "loopchannel 0, .loop" else: "sound_loop 0, .loop"
+          else:
+            if useOldMacros: "jumpchannel .loop" else: "sound_jump .loop"
         else:
           if useOldMacros: "endchannel" else: "sound_ret"
       ]
@@ -599,10 +635,10 @@ proc toPretAsm(
       if (pattern.channel.int == channel):
         result &= "\n.pattern$#\n" % [$pattern.index]
         for line in pattern2Seq(pattern, globalTiming.speed[0].int).seq2Asm(
-          module.instruments, constName, channel, useOldMacros, enablePrism,
+          module.instruments, constName, channel, useOldMacros, enablePrism, gen1Compat,
           globalTiming.speed[0].int
         ):
           result &= "\t$#\n" % [line]
 
-proc convertFile*(inFile: string, useOldMacros, enablePrism: bool): string =
-  result = moduleFromFile(inFile).toPretAsm(useOldMacros, enablePrism)
+proc convertFile*(inFile: string, useOldMacros, enablePrism, gen1Compat: bool): string =
+  result = moduleFromFile(inFile).toPretAsm(useOldMacros, enablePrism, gen1Compat)

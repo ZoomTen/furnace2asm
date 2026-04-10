@@ -9,6 +9,7 @@ proc showHelp() =
   echo "    -h, --help      Show this help screen."
   echo "    -o, --old       Convert to the legacy macros format."
   echo "    -p, --prism     Pokemon Prism support, implies -o"
+  echo "    -1, --gen1      Enable Gen 1 compatibility"
   echo "    -v, --version   Show app version"
 
 proc showAppVersionAndQuit() =
@@ -24,6 +25,7 @@ when isMainModule:
     args = parseopt.initOptParser(os.commandLineParams())
     useOldMacros = false
     enablePrism = false
+    gen1Compat = false
 
   if parseopt.remainingArgs(args).len == 0:
     showHelpAndQuit()
@@ -47,6 +49,8 @@ when isMainModule:
       of "p":
         useOldMacros = true
         enablePrism = true
+      of "1":
+        gen1Compat = true
       of "v":
         showAppVersionAndQuit()
       else:
@@ -61,6 +65,8 @@ when isMainModule:
       of "prism":
         useOldMacros = true
         enablePrism = true
+      of "gen1":
+        gen1Compat = true
       of "version":
         showAppVersionAndQuit()
       else:
@@ -70,4 +76,4 @@ when isMainModule:
   if inFile == "":
     showHelpAndQuit()
 
-  echo convertFile(inFile, useOldMacros, enablePrism)
+  echo convertFile(inFile, useOldMacros, enablePrism, gen1Compat)
